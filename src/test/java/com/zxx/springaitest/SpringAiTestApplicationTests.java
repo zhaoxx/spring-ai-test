@@ -14,8 +14,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.io.Resource;
 import reactor.core.publisher.Flux;
 
-import java.util.ArrayList;
-
 @SpringBootTest
 class SpringAiTestApplicationTests {
 
@@ -76,9 +74,9 @@ class SpringAiTestApplicationTests {
                 .build();
 
         String result = chatClient.prompt()
-                .advisors(new ReAgainAdvisor(), new SimpleLoggerAdvisor(), new SafeGuardAdvisor(Lists.newArrayList("元帅"), "系统 404", 0))
+                .advisors(new ReAgainAdvisor(), new SimpleLoggerAdvisor(), new SafeGuardAdvisor(Lists.newArrayList("绝密"), "系统 404", 0))
 //                .system("限制50token")
-                .user("你好,中国十大元帅都有谁")
+                .user("你好")
                 .call()
                 .content();
 
