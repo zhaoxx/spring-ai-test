@@ -72,6 +72,12 @@
             <scope>runtime</scope>
             <version>${mysql-connector.version}</version>
         </dependency>
+
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <optional>true</optional> <!-- 建议设置为 optional，避免传递给依赖你项目的其他项目 -->
+        </dependency>
     </dependencies>
     <dependencyManagement>
         <dependencies>
