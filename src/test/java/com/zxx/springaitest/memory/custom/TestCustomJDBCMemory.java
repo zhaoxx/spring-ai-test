@@ -1,4 +1,4 @@
-package com.zxx.springaitest.memory;
+package com.zxx.springaitest.memory.custom;
 
 
 import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatModel;
@@ -7,8 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.PromptChatMemoryAdvisor;
 import org.springframework.ai.chat.memory.ChatMemory;
-import org.springframework.ai.chat.memory.MessageWindowChatMemory;
-import org.springframework.ai.chat.memory.repository.jdbc.JdbcChatMemoryRepository;
+import org.springframework.ai.chat.memory.ChatMemoryRepository;
 import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -23,22 +22,15 @@ public class TestCustomJDBCMemory {
 
     @TestConfiguration
     static class Config {
-        // 1. 注入自定义的 Repository
-        @Bean
-        CustomJdbcChatMemoryRepository customJdbcChatMemoryRepository(
-                JdbcChatMemoryRepository jdbcChatMemoryRepository, // 注入原生实例
-                JdbcTemplate jdbcTemplate) {
-            return new CustomJdbcChatMemoryRepository(jdbcChatMemoryRepository, jdbcTemplate);
-        }
 
-        // 2. 在 ChatMemory Bean 中使用自定义的 Repository
+        // 1. 注入原生的 JdbcChatMemoryRepository（或者自定义的纯 CRUD Repository）
         @Bean
-        ChatMemory chatMemory(CustomJdbcChatMemoryRepository customJdbcChatMemoryRepository){
-            return MessageWindowChatMemory
-                    .builder()
-                    .maxMessages(10) // 这个值依然生效，用于控制查询时返回的条数
-                    .chatMemoryRepository(customJdbcChatMemoryRepository)
-                    .build();
+        public ChatMemory chatMemory(JdbcTemplate jdbcTemplate) {
+            // 1. 创建自定义的增量 Repository
+            ChatMemoryRepository repository = new IncrementalJdbcChatMemoryRepository(jdbcTemplate);
+
+            // 2. 创建自定义的增量 Memory，设置最大保留 50 条上下文
+            return new IncrementalChatMemory(repository, 50);
         }
     }
 
@@ -57,7 +49,7 @@ public class TestCustomJDBCMemory {
     public void testCustomerJDBCMemory(@Autowired ChatMemory chatMemory){
         String content1 = chatClient.prompt()
                 .advisors(advisorSpec -> advisorSpec.param(ChatMemory.CONVERSATION_ID,"1"))
-                .user("你好")
+                .user("我是赵一一")
                 .call()
                 .content();
         System.out.println(content1);
@@ -65,7 +57,7 @@ public class TestCustomJDBCMemory {
 
         String content2 = chatClient.prompt()
                 .advisors(advisorSpec -> advisorSpec.param(ChatMemory.CONVERSATION_ID,"1"))
-                .user("你好")
+                .user("我是谁？")
                 .call()
                 .content();
         System.out.println(content2);
