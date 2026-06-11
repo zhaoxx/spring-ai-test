@@ -26,11 +26,12 @@ public class TestIncementJDBCMemory {
         // 1. 注入原生的 JdbcChatMemoryRepository（或者自定义的纯 CRUD Repository）
         @Bean
         public ChatMemory chatMemory(JdbcTemplate jdbcTemplate) {
+            int messageSize = 10;
             // 1. 创建自定义的增量 Repository
-            ChatMemoryRepository repository = new IncrementalJdbcChatMemoryRepository(jdbcTemplate);
+            IncrementalJdbcChatMemoryRepository repository = new IncrementalJdbcChatMemoryRepository(jdbcTemplate);
 
             // 2. 创建自定义的增量 Memory，设置最大保留 50 条上下文
-            return new IncrementalChatMemory(repository, 50);
+            return new IncrementalChatMemory(repository, messageSize);
         }
     }
 

@@ -1,8 +1,8 @@
 package com.zxx.springaitest.memory.custom;
+
 import org.springframework.ai.chat.memory.ChatMemoryRepository;
 import org.springframework.ai.chat.messages.*;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.util.Assert;
 
 import java.sql.Timestamp;
@@ -10,19 +10,12 @@ import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * 增量式 JDBC ChatMemory Repository
- * 解决官方版本 "先删后插" 导致的性能问题和 ID 暴涨问题
- */
 public class IncrementalJdbcChatMemoryRepository implements ChatMemoryRepository {
 
     private final JdbcTemplate jdbcTemplate;
-
-    // 表名，可根据实际修改
     private static final String TABLE_NAME = "spring_ai_chat_memory";
 
     public IncrementalJdbcChatMemoryRepository(JdbcTemplate jdbcTemplate) {
-        Assert.notNull(jdbcTemplate, "JdbcTemplate must not be null");
         this.jdbcTemplate = jdbcTemplate;
     }
 
@@ -34,7 +27,7 @@ public class IncrementalJdbcChatMemoryRepository implements ChatMemoryRepository
 
     @Override
     public List<Message> findByConversationId(String conversationId) {
-        // 保持原有查询逻辑不变
+        // 保持原有查询逻辑不变，但建议加上 ORDER BY timestamp ASC
         return jdbcTemplate.query(
                 "SELECT content, type, timestamp FROM " + TABLE_NAME + " WHERE conversation_id = ? ORDER BY timestamp ASC",
                 (rs, rowNum) -> {
@@ -42,58 +35,50 @@ public class IncrementalJdbcChatMemoryRepository implements ChatMemoryRepository
                     String typeStr = rs.getString("type");
                     Instant timestamp = rs.getTimestamp("timestamp").toInstant();
 
-                    Message message;
                     MessageType type = MessageType.valueOf(typeStr.toUpperCase());
-
-                    switch (type) {
-                        case USER:
-                            message = new UserMessage(content);
-                            break;
-                        case ASSISTANT:
-                            message = new AssistantMessage(content);
-                            break;
-                        case SYSTEM:
-                            message = new SystemMessage(content);
-                            break;
-                        default:
-                            throw new IllegalArgumentException("Unknown message type: " + type);
-                    }
-
-                    // 如果需要保留时间戳用于排序或展示，可存入 metadata（可选）
-                    message.getMetadata().put("timestamp", timestamp);
-                    return message;
+                    // 这里使用 MessageBuilder 或 switch-case 重建消息，视你的 Spring AI 版本而定
+                    // 假设使用通用构建方式
+                    return switch (type) {
+                        case USER -> new UserMessage(content);
+                        case ASSISTANT -> new AssistantMessage(content);
+                        case SYSTEM -> new SystemMessage(content);
+                        default -> throw new IllegalArgumentException("Unknown type: " + type);
+                    };
                 },
-                conversationId);
+                conversationId
+        );
     }
 
     @Override
     public void saveAll(String conversationId, List<Message> messages) {
-        if (messages == null || messages.isEmpty()) {
-            return;
-        }
+        Assert.notNull(conversationId, "conversationId must not be null");
+        Assert.notNull(messages, "messages must not be null");
 
-        // 核心优化点：使用 INSERT IGNORE (MySQL) 或 ON CONFLICT DO NOTHING (PostgreSQL)
-        // 这样如果消息已存在（基于唯一键），则跳过；不存在则插入。
-        // 注意：这需要你的表结构支持唯一性校验（例如内容+时间戳，或者外部传入ID）。
-        // 为了简化演示，这里假设每次保存都是追加，或者由上层 Memory 保证去重。
+        if (messages.isEmpty()) return;
 
-        String sql = """
-                INSERT INTO %s (conversation_id, content, type, timestamp)
-                VALUES (?, ?, ?, ?)
-                """.formatted(TABLE_NAME);
+        // 批量插入，使用 INSERT IGNORE 防止重复
+        String sql = "INSERT IGNORE INTO " + TABLE_NAME +
+                " (conversation_id, message_id, content, type, timestamp) VALUES (?, ?, ?, ?, ?)";
 
-        // 批量执行插入
-        jdbcTemplate.batchUpdate(sql, messages, messages.size(), (ps, message) -> {
-            ps.setString(1, conversationId);
-            ps.setString(2, message.getText()); // 获取消息内容
-            ps.setString(3, message.getMessageType().name()); // 获取消息类型
-            ps.setTimestamp(4, Timestamp.from(Instant.now())); // 记录当前时间
-        });
+        List<Object[]> batchArgs = messages.stream().map(msg -> {
+            // 核心：从 Metadata 中获取 ID，如果没有则生成一个新的
+            String messageId = msg.getMetadata().getOrDefault("message_id", UUID.randomUUID().toString()).toString();
+
+            return new Object[]{
+                    conversationId,
+                    messageId,
+                    msg.getText(),
+                    msg.getMessageType().name(),
+                    Timestamp.from(Instant.now())
+            };
+        }).toList();
+
+        jdbcTemplate.batchUpdate(sql, batchArgs);
     }
 
     @Override
     public void deleteByConversationId(String conversationId) {
-        // 仅在显式删除会话时调用，平时不调用
-        jdbcTemplate.update("DELETE FROM " + TABLE_NAME + " WHERE conversation_id = ?", conversationId);
+        // 增量模式下通常不需要清空，除非用户主动要求重置会话
+        // jdbcTemplate.update("DELETE FROM " + TABLE_NAME + " WHERE conversation_id = ?", conversationId);
     }
 }
