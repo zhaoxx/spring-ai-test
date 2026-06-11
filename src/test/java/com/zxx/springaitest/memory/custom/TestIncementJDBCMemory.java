@@ -18,7 +18,7 @@ import org.springframework.test.context.jdbc.Sql;
 
 @SpringBootTest
 @Sql(scripts = "/sql/schema-mysql.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
-public class TestCustomJDBCMemory {
+public class TestIncementJDBCMemory {
 
     @TestConfiguration
     static class Config {
@@ -46,7 +46,7 @@ public class TestCustomJDBCMemory {
     }
 
     @Test
-    public void testCustomerJDBCMemory(@Autowired ChatMemory chatMemory){
+    public void testIncrementJDBCMemory(@Autowired ChatMemory chatMemory){
         String content1 = chatClient.prompt()
                 .advisors(advisorSpec -> advisorSpec.param(ChatMemory.CONVERSATION_ID,"1"))
                 .user("我是赵一一")
