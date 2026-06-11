@@ -1,4 +1,4 @@
-CREATE TABLE `SPRING_AI_CHAT_MEMORY` (
+CREATE TABLE IF NOT EXISTS `SPRING_AI_CHAT_MEMORY` (
                                          `conversation_id` varchar(36) NOT NULL,
                                          `content` longtext NOT NULL,
                                          `type` varchar(20) NOT NULL,
