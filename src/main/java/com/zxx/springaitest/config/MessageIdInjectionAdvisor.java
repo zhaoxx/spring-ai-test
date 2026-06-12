@@ -11,7 +11,6 @@ import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.Prompt;
-import org.springframework.core.Ordered;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
@@ -72,13 +71,6 @@ public class MessageIdInjectionAdvisor implements BaseAdvisor {
         return chatClientRequest;
     }
 
-//    @Override
-//    public ChatClientResponse after(ChatClientResponse chatClientResponse, AdvisorChain advisorChain) {
-//        // 如果需要对 AI 的响应（AssistantMessage）也注入 ID 并保存，可以在这里处理
-//        // 通常 AI 的响应 ID 由底层模型或数据库生成，这里按需扩展
-//        return chatClientResponse;
-//    }
-
     @Override
     public ChatClientResponse after(ChatClientResponse chatClientResponse, AdvisorChain advisorChain) {
         // 拦截 AI 的响应，为 ASSISTANT 消息注入 message_id
@@ -114,8 +106,8 @@ public class MessageIdInjectionAdvisor implements BaseAdvisor {
 
     @Override
     public int getOrder() {
-        // 设置为最高优先级，确保在任何其他 Advisor（如 Memory、RAG）之前执行
-        // 这样能保证进入存储层或大模型的消息都已经带上了 ID
-        return -1;
+        // 设置为最高优先级，确保在 PromptChatMemoryAdvisor (order=-100) 之前执行
+        // 这样能保证进入 Memory 存储的消息都已经带上了 message_id
+        return 0;
     }
 }

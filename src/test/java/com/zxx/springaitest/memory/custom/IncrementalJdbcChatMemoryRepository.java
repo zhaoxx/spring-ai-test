@@ -7,7 +7,9 @@ import org.springframework.util.Assert;
 
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 public class IncrementalJdbcChatMemoryRepository implements ChatMemoryRepository {
@@ -29,18 +31,38 @@ public class IncrementalJdbcChatMemoryRepository implements ChatMemoryRepository
     public List<Message> findByConversationId(String conversationId) {
         // 保持原有查询逻辑不变，但建议加上 ORDER BY timestamp ASC
         return jdbcTemplate.query(
-                "SELECT content, type, timestamp FROM " + TABLE_NAME + " WHERE conversation_id = ? ORDER BY timestamp ASC",
+                "SELECT content, type, timestamp, message_id FROM " + TABLE_NAME + " WHERE conversation_id = ? ORDER BY timestamp ASC",
                 (rs, rowNum) -> {
                     String content = rs.getString("content");
                     String typeStr = rs.getString("type");
                     Instant timestamp = rs.getTimestamp("timestamp").toInstant();
+                    String messageId = rs.getString("message_id");
 
                     MessageType type = MessageType.valueOf(typeStr.toUpperCase());
                     // 这里使用 MessageBuilder 或 switch-case 重建消息，视你的 Spring AI 版本而定
                     // 假设使用通用构建方式
                     return switch (type) {
-                        case USER -> new UserMessage(content);
-                        case ASSISTANT -> new AssistantMessage(content);
+                        case USER -> {
+                            UserMessage userMessage = new UserMessage(content);
+                            Map<String, Object> metadata = new HashMap<>(userMessage.getMetadata());
+                            metadata.put("message_id", messageId);
+
+                            yield userMessage.mutate()
+                                    .metadata(metadata)
+                                    .build();
+                        }
+                        case ASSISTANT -> {
+                            AssistantMessage assistantMessage = new AssistantMessage(content);
+                            Map<String, Object> metadata = new HashMap<>(assistantMessage.getMetadata());
+                            metadata.put("message_id", messageId);
+
+                            yield AssistantMessage.builder()
+                                    .content(assistantMessage.getText())              // 保留原有文本内容
+                                    .properties(metadata)                             // 注入包含新数据的 metadata
+                                    .toolCalls(assistantMessage.getToolCalls())    // 保留原有的 toolCalls
+                                    .media(assistantMessage.getMedia())            // 保留原有的媒体文件（如有）
+                                    .build();
+                        }
                         case SYSTEM -> new SystemMessage(content);
                         default -> throw new IllegalArgumentException("Unknown type: " + type);
                     };

@@ -1,16 +1,22 @@
 package com.zxx.springaitest.memory.custom;
 
 import org.springframework.ai.chat.memory.ChatMemory;
+import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.Message;
+import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
  * 增量式 ChatMemory 实现
- * 核心逻辑：对比本地缓存与传入的新消息列表，仅提取出“未存储过”的新消息进行保存。
+ * 核心逻辑：对比本地缓存与传入的新消息列表，仅提取出"未存储过"的新消息进行保存。
+ * 在保存前为没有 message_id 的消息自动注入 UUID。
  */
 public class IncrementalChatMemory implements ChatMemory {
 
@@ -30,16 +36,14 @@ public class IncrementalChatMemory implements ChatMemory {
         }
 
         // 2. 【关键步骤】从数据库加载当前会话已有的消息
-        // 注意：这里我们假设 Repository 实现了带 ID 的查询，或者至少能查出所有消息
         List<Message> existingMessages = this.repository.findByConversationId(conversationId);
 
-        // 3. 构建一个“已存在消息ID”的集合，用于 O(1) 快速查找
-        // 如果消息没有 ID（旧数据），则根据内容+类型生成临时指纹作为 Key
+        // 3. 构建一个"已存在消息ID"的集合，用于 O(1) 快速查找
         List<String> existingKeys = existingMessages.stream()
                 .map(this::extractMessageKey)
                 .collect(Collectors.toList());
 
-        // 4. 过滤出新消息
+        // 4. 过滤出新消息，并在保存前注入 message_id
         List<Message> newMessagesToSave = new ArrayList<>();
 
         for (Message msg : messages) {
@@ -47,7 +51,9 @@ public class IncrementalChatMemory implements ChatMemory {
 
             // 只有当这个 Key 不在数据库中时，才视为新消息
             if (!existingKeys.contains(currentKey)) {
-                newMessagesToSave.add(msg);
+                // 【关键】在保存前为消息注入 message_id
+                Message msgWithId = ensureMessageId(msg);
+                newMessagesToSave.add(msgWithId);
             }
         }
 
@@ -55,6 +61,43 @@ public class IncrementalChatMemory implements ChatMemory {
         if (!newMessagesToSave.isEmpty()) {
             this.repository.saveAll(conversationId, newMessagesToSave);
         }
+    }
+
+    /**
+     * 确保消息有 message_id，如果没有则注入 UUID
+     */
+    private Message ensureMessageId(Message message) {
+        Map<String, Object> metadata = new HashMap<>(message.getMetadata());
+
+        // 如果已经有 message_id，直接返回原消息
+        if (metadata.containsKey("message_id") && StringUtils.hasText(metadata.get("message_id").toString())) {
+            return message;
+        }
+
+        // 注入新的 message_id
+        String uuid = UUID.randomUUID().toString();
+        metadata.put("message_id", uuid);
+
+        // 根据消息类型重建消息
+        if (message instanceof UserMessage userMessage) {
+            UserMessage newMsg = userMessage.mutate()
+                    .metadata(metadata)
+                    .build();
+            System.out.println("[IncrementalChatMemory] USER message_id: " + uuid);
+            return newMsg;
+        } else if (message instanceof AssistantMessage assistantMessage) {
+            AssistantMessage newMsg = AssistantMessage.builder()
+                    .content(assistantMessage.getText())
+                    .properties(metadata)
+                    .toolCalls(assistantMessage.getToolCalls())
+                    .media(assistantMessage.getMedia())
+                    .build();
+            System.out.println("[IncrementalChatMemory] ASSISTANT message_id: " + uuid);
+            return newMsg;
+        }
+
+        // 其他类型消息原样返回
+        return message;
     }
 
     @Override
@@ -86,11 +129,7 @@ public class IncrementalChatMemory implements ChatMemory {
         }
 
         // 兜底策略：如果没有 ID，使用 "类型:内容" 作为唯一键
-        // 这解决了你之前遇到的 "User重复提问被误判为旧消息" 的问题吗？
-        // 实际上，如果使用了 UUID 方案，这里几乎永远走不到。
-        // 但为了兼容，保留此逻辑。
         return message.getMessageType().name() + ":" + message.getText();
     }
-
 
 }
