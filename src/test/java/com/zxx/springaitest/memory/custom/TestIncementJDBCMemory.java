@@ -26,7 +26,7 @@ public class TestIncementJDBCMemory {
         // 1. 注入原生的 JdbcChatMemoryRepository（或者自定义的纯 CRUD Repository）
         @Bean
         public ChatMemory chatMemory(JdbcTemplate jdbcTemplate) {
-            int messageSize = 10;
+            int messageSize = 4;
             // 1. 创建自定义的增量 Repository
             IncrementalJdbcChatMemoryRepository repository = new IncrementalJdbcChatMemoryRepository(jdbcTemplate);
 
@@ -48,13 +48,13 @@ public class TestIncementJDBCMemory {
 
     @Test
     public void testIncrementJDBCMemory(@Autowired ChatMemory chatMemory){
-//        String content1 = chatClient.prompt()
-//                .advisors(advisorSpec -> advisorSpec.param(ChatMemory.CONVERSATION_ID,"1"))
-//                .user("我是赵一一")
-//                .call()
-//                .content();
-//        System.out.println(content1);
-//        System.out.println("/////////////////////////////////");
+        String content1 = chatClient.prompt()
+                .advisors(advisorSpec -> advisorSpec.param(ChatMemory.CONVERSATION_ID,"1"))
+                .user("我是赵一一")
+                .call()
+                .content();
+        System.out.println(content1);
+        System.out.println("/////////////////////////////////");
 
         String content2 = chatClient.prompt()
                 .advisors(advisorSpec -> advisorSpec.param(ChatMemory.CONVERSATION_ID,"1"))

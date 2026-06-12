@@ -8,6 +8,8 @@ import org.springframework.ai.chat.client.advisor.api.BaseAdvisor;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.UserMessage;
+import org.springframework.ai.chat.model.ChatResponse;
+import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.core.Ordered;
 import org.springframework.stereotype.Component;
@@ -85,34 +87,28 @@ public class MessageIdInjectionAdvisor implements BaseAdvisor {
 
             Map<String, Object> metadata = new HashMap<>(originalAssistantMsg.getMetadata());
             if (!metadata.containsKey("message_id")) {
-//                String uuid = UUID.randomUUID().toString();
-//                metadata.put("message_id", uuid);
+                String uuid = UUID.randomUUID().toString();
+                metadata.put("message_id", uuid);
 
-//                // 使用 mutate() 重建 AssistantMessage
-//                AssistantMessage updatedAssistantMsg = originalAssistantMsg.mutate()
-//                        .metadata(metadata)
-//                        .build();
-//
-//                log.info("成功注入 ASSISTANT message_id: {}", uuid);
-
-                // 注意：由于 ChatResponse 和 Result 的结构较深，
-                // 这里假设你使用的 Spring AI 版本支持对响应进行 mutate。
-                // 如果不支持直接 mutate 响应，你可能需要在你的 CustomJDBCMemory 中
-                // 针对 ASSISTANT 消息做兜底生成 ID 的处理。
-
-                // 返回修改后的响应（具体 API 视你的 Spring AI 版本而定）
-                // 这里给出一个通用的处理思路：
-                /*
-                ChatResponse newChatResponse = chatClientResponse.chatResponse().mutate()
-                        .result(new Result(updatedAssistantMsg))
+                // 3. 重新构建 AssistantMessage
+                AssistantMessage newAssistantMsg = AssistantMessage.builder()
+                        .content(originalAssistantMsg.getText())              // 保留原有文本内容
+                        .properties(metadata)                             // 注入包含新数据的 metadata
+                        .toolCalls(originalAssistantMsg.getToolCalls())    // 保留原有的 toolCalls
+                        .media(originalAssistantMsg.getMedia())            // 保留原有的媒体文件（如有）
                         .build();
+
+                log.info("成功注入 ASSISTANT message_id: {}", uuid);
+
+                // 4. 重新构建 ChatResponse 和 ChatClientResponse 并返回
+                Generation newGeneration = new Generation(newAssistantMsg);
+                ChatResponse newChatResponse = new ChatResponse(List.of(newGeneration));
+
                 return chatClientResponse.mutate()
                         .chatResponse(newChatResponse)
                         .build();
-                */
             }
         }
-
         return chatClientResponse;
     }
 
@@ -120,6 +116,6 @@ public class MessageIdInjectionAdvisor implements BaseAdvisor {
     public int getOrder() {
         // 设置为最高优先级，确保在任何其他 Advisor（如 Memory、RAG）之前执行
         // 这样能保证进入存储层或大模型的消息都已经带上了 ID
-        return Ordered.HIGHEST_PRECEDENCE;
+        return -1;
     }
 }

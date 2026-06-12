@@ -78,6 +78,7 @@ public class IncrementalJdbcChatMemoryRepository implements ChatMemoryRepository
 
     @Override
     public void deleteByConversationId(String conversationId) {
+        System.out.println("deleteByConversationId");
         // 增量模式下通常不需要清空，除非用户主动要求重置会话
         // jdbcTemplate.update("DELETE FROM " + TABLE_NAME + " WHERE conversation_id = ?", conversationId);
     }
