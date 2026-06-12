@@ -1,4 +1,4 @@
-package com.zxx.springaitest.memory.custom;
+package com.zxx.springaitest.config;
 
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.messages.AssistantMessage;

@@ -11,6 +11,8 @@ import java.util.Map;
 
 public class ReAgainAdvisor implements BaseAdvisor {
 
+//    QuestionAnswerAdvisor  RAG增强检索
+
     private static final String DEFAULT_USER_TEXT_ADVISE = """
             {user_input_text}
             再思考一下上个问题：{user_input_text}
