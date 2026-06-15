@@ -2,5 +2,5 @@ spring:
   datasource:
     username: root
     password: 123456
-    url: jdbc:mysql://localhost:3306/spring_ai?useUnicode=true&characterEncoding=UTF-8&serverTimezone=CTT&useSSL=false
+    url: jdbc:mysql://localhost:3306/spring_ai?useUnicode=true&characterEncoding=UTF-8&serverTimezone=CTT&useSSL=false&allowPublicKeyRetrieval=true
     driver-class-name: com.mysql.cj.jdbc.Driver
