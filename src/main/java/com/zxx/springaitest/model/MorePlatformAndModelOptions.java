@@ -1,4 +1,4 @@
-package com.zxx.springaitest;
+package com.zxx.springaitest.model;
 
 public class MorePlatformAndModelOptions {
 

@@ -1,7 +1,7 @@
-package com.zxx.springaitest;
+package com.zxx.springaitest.controller;
 
-import com.zxx.springaitest.customer.CustomerOptions;
-import com.zxx.springaitest.customer.EcommerceCustomerService;
+import com.zxx.springaitest.model.CustomerOptions;
+import com.zxx.springaitest.service.EcommerceCustomerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;

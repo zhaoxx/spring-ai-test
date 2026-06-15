@@ -1,4 +1,4 @@
-package com.zxx.springaitest;
+package com.zxx.springaitest.config;
 
 import org.springframework.ai.chat.client.ChatClientRequest;
 import org.springframework.ai.chat.client.ChatClientResponse;

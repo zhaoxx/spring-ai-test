@@ -1,4 +1,4 @@
-package com.zxx.springaitest.customer;
+package com.zxx.springaitest.tools;
 
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;

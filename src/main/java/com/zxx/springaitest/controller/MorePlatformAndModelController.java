@@ -1,6 +1,7 @@
-package com.zxx.springaitest;
+package com.zxx.springaitest.controller;
 
 import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatModel;
+import com.zxx.springaitest.model.MorePlatformAndModelOptions;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.prompt.ChatOptions;

@@ -1,6 +1,7 @@
 package com.zxx.springaitest;
 
 import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatModel;
+import com.zxx.springaitest.config.ReAgainAdvisor;
 import org.assertj.core.util.Lists;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.chat.client.ChatClient;

@@ -1,4 +1,4 @@
-package com.zxx.springaitest.customer;
+package com.zxx.springaitest.model;
 
 public class CustomerOptions {
 

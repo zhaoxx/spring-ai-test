@@ -1,7 +1,8 @@
-package com.zxx.springaitest.customer;
+package com.zxx.springaitest.service;
 
 import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatModel;
 import com.zxx.springaitest.config.MessageIdInjectionAdvisor;
+import com.zxx.springaitest.tools.OrderTools;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.PromptChatMemoryAdvisor;
 import org.springframework.ai.chat.memory.ChatMemory;
