@@ -1,7 +1,7 @@
 package com.zxx.springaitest.controller;
 
 import com.zxx.springaitest.model.CustomerOptions;
-import com.zxx.springaitest.service.EcommerceCustomerService;
+import com.zxx.springaitest.service.SmartCustomerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -15,7 +15,7 @@ import java.util.UUID;
 public class CustomerServiceController {
 
     @Autowired
-    private EcommerceCustomerService customerService;
+    private SmartCustomerService smartCustomerService;
 
     /**
      * http://localhost:8080/api/customer/chat?message=取消订单id为11111的订单&sessionId=1111
@@ -26,6 +26,6 @@ public class CustomerServiceController {
     public Flux<String> chat(CustomerOptions customerOptions) {
         String message = customerOptions.getMessage();
         String sessionId = Objects.isNull(customerOptions.getSessionId()) ? UUID.randomUUID().toString() : customerOptions.getSessionId();
-        return customerService.chat(message, sessionId);
+        return smartCustomerService.chat(message, sessionId);
     }
 }
