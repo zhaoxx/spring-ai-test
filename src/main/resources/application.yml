@@ -4,3 +4,9 @@ spring:
     password: 123456
     url: jdbc:mysql://localhost:3306/spring_ai?useUnicode=true&characterEncoding=UTF-8&serverTimezone=CTT&useSSL=false&allowPublicKeyRetrieval=true
     driver-class-name: com.mysql.cj.jdbc.Driver
+#  datasource:
+#    url: jdbc:postgresql://localhost:5432/your_database
+#    username: your_username
+#    password: your_password
+#    driver-class-name: org.postgresql.Driver
+
