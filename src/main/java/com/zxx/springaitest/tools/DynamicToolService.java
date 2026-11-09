@@ -1,8 +1,11 @@
 package com.zxx.springaitest.tools;
 
+import com.zxx.springaitest.order.Order;
+import com.zxx.springaitest.order.OrderService;
 import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.tool.definition.ToolDefinition;
 import org.springframework.ai.tool.method.MethodToolCallback;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ReflectionUtils;
 
@@ -13,16 +16,8 @@ import java.util.List;
 @Service
 public class DynamicToolService {
 
-    record Order(String orderId, String name) {
-        public Order(String orderId, String name) {
-            this.orderId = orderId;
-            this.name = name;
-        }
-
-        public Order() {
-            this(null, null);
-        }
-    }
+    @Autowired
+    private OrderService orderService;
 
     /**
      * 根据订单号查询订单状态、商品明细和收货地址。
@@ -31,10 +26,8 @@ public class DynamicToolService {
      */
     public String queryOrder(String orderId) {
         // 实际开发中这里调用数据库或微服务
-        if (orderId.startsWith("abc")) {
-            return String.format("订单 %s 状态为：待发货", orderId);
-        }
-        return String.format("订单 %s 状态为：已发货，商品：[蓝牙耳机x1]，预计明天送达。", orderId);
+        Order order = orderService.queryOrder(orderId);
+        return String.format("订单 %s 状态为：%s，预计明天送达。", order.orderId(), order.status().getDescription());
     }
 
     /**
@@ -44,10 +37,7 @@ public class DynamicToolService {
      * @return
      */
     public String cancelOrder(String orderId, String name) {
-        // 实际开发中需做严格的幂等和状态校验
-        if (!orderId.startsWith("abc")) {
-            throw new RuntimeException("参数异常");
-        }
+        orderService.cancelOrder(orderId);
         return String.format("订单 %s 已成功取消，款项将在1-3个工作日内原路退回。", orderId);
     }
 
