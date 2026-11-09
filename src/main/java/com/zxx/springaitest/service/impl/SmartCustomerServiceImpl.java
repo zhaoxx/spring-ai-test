@@ -2,20 +2,25 @@ package com.zxx.springaitest.service.impl;
 
 import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatModel;
 import com.zxx.springaitest.config.MessageIdInjectionAdvisor;
+import com.zxx.springaitest.service.KnowledgeBaseService;
 import com.zxx.springaitest.service.SmartCustomerService;
 import com.zxx.springaitest.tools.DynamicToolService;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.PromptChatMemoryAdvisor;
 import org.springframework.ai.chat.memory.ChatMemory;
-import org.springframework.ai.deepseek.DeepSeekChatModel;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
+
+import java.util.Objects;
 
 @Service
 public class SmartCustomerServiceImpl implements SmartCustomerService {
 
     private final ChatClient chatClient;
+
+    @Autowired
+    private KnowledgeBaseService knowledgeBaseService;
 
 //    public SmartCustomerService(@Autowired DashScopeChatModel chatModel, @Autowired ChatMemory chatMemory, OrderTools orderTools) {
 //        ChatClient.Builder builder = ChatClient.builder(chatModel);
@@ -61,7 +66,7 @@ public class SmartCustomerServiceImpl implements SmartCustomerService {
      * @param conversationId 会话ID（用于隔离不同用户的记忆）
      */
     @Override
-    public Flux<String> chat(String userMessage, String conversationId) {
+    public Flux<String> chatWithStream(String userMessage, String conversationId) {
         return chatClient.prompt()
                 .user(userMessage)
                 // 传入会话ID，让Memory能够区分并召回当前用户的上下文
@@ -69,7 +74,24 @@ public class SmartCustomerServiceImpl implements SmartCustomerService {
                 .stream()
                 .content();
     }
-//
+
+    @Override
+    public String chat(String userMessage, String conversationId) {
+        // 先调用知识库回答问题，如果知识库有回答则返回
+        String knowledgeResponse = knowledgeBaseService.chatWithKnowledge(userMessage, conversationId);
+        if (Objects.nonNull(knowledgeResponse)) {
+            return knowledgeResponse;
+        }
+
+        return chatClient.prompt()
+                .user(userMessage)
+                // 传入会话ID，让Memory能够区分并召回当前用户的上下文
+                .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, conversationId))
+                .call()
+                .content();
+    }
+
+    //
 //    public Flux<String> chat(String userMessage, String conversationId) {
 //        StringBuilder full = new StringBuilder();
 //        return chatClient.prompt()

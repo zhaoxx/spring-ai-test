@@ -9,5 +9,7 @@ public interface SmartCustomerService {
      * @param userMessage 用户输入
      * @param conversationId 会话ID（用于隔离不同用户的记忆）
      */
-    Flux<String> chat(String userMessage, String conversationId);
+    Flux<String> chatWithStream(String userMessage, String conversationId);
+
+    String chat(String userMessage, String conversationId);
 }

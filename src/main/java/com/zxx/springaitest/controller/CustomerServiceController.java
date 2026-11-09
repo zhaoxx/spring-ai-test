@@ -18,12 +18,24 @@ public class CustomerServiceController {
     private SmartCustomerService smartCustomerService;
 
     /**
+     * http://localhost:8080/api/customer/chatWithStream?message=取消订单id为11111的订单&sessionId=1111
+     * @param customerOptions
+     * @return
+     */
+    @RequestMapping(value = "/chatWithStream", produces = "text/stream;charset=UTF-8")
+    public Flux<String> chatWithStream(CustomerOptions customerOptions) {
+        String message = customerOptions.getMessage();
+        String sessionId = Objects.isNull(customerOptions.getSessionId()) ? UUID.randomUUID().toString() : customerOptions.getSessionId();
+        return smartCustomerService.chatWithStream(message, sessionId);
+    }
+
+    /**
      * http://localhost:8080/api/customer/chat?message=取消订单id为11111的订单&sessionId=1111
      * @param customerOptions
      * @return
      */
-    @RequestMapping(value = "/chat", produces = "text/stream;charset=UTF-8")
-    public Flux<String> chat(CustomerOptions customerOptions) {
+    @RequestMapping(value = "/chat")
+    public String chat(CustomerOptions customerOptions) {
         String message = customerOptions.getMessage();
         String sessionId = Objects.isNull(customerOptions.getSessionId()) ? UUID.randomUUID().toString() : customerOptions.getSessionId();
         return smartCustomerService.chat(message, sessionId);

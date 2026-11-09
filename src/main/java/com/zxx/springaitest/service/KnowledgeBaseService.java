@@ -17,4 +17,6 @@ public interface KnowledgeBaseService {
     String chatWithKnowledge(String query, int topK);
 
     Flux<String> chatWithKnowledgeStream(String query, int topK);
+
+    String chatWithKnowledge(String query, String conversationId);
 }

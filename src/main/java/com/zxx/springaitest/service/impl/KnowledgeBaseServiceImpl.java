@@ -2,10 +2,12 @@ package com.zxx.springaitest.service.impl;
 
 import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatModel;
 import com.zxx.springaitest.service.KnowledgeBaseService;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.SimpleLoggerAdvisor;
+import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.reader.pdf.PagePdfDocumentReader;
@@ -14,6 +16,7 @@ import org.springframework.ai.transformer.splitter.TokenTextSplitter;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 import org.springframework.web.multipart.MultipartFile;
@@ -33,6 +36,9 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
 
     private final VectorStore vectorStore;
     private final ChatClient chatClient;
+
+    @Value("${similarity.search.min.score}")
+    private Double minScore;
 
     @Autowired
     public KnowledgeBaseServiceImpl(VectorStore vectorStore,
@@ -115,6 +121,7 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
         }
 
         String context = relevantDocs.stream()
+//                    .filter(doc -> doc.getScore() > minScore)
                 .map(Document::getText)
                 .collect(Collectors.joining("\n\n"));
 
@@ -143,6 +150,7 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
             }
 
             String context = relevantDocs.stream()
+//                    .filter(doc -> doc.getScore() > minScore)
                     .map(Document::getText)
                     .collect(Collectors.joining("\n\n"));
 
@@ -159,5 +167,43 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
             logger.error("流式知识库对话失败，查询: '{}'", query, e);
             return Flux.just("对话过程中发生错误: " + e.getMessage());
         }
+    }
+
+    @Override
+    public String chatWithKnowledge(String query, String conversationId) {
+        Assert.hasText(query, "查询问题不能为空");
+        logger.info("开始知识库对话，查询: '{}'", query);
+
+        List<Document> relevantDocs = similaritySearch(query, 3);
+        if (relevantDocs.isEmpty()) {
+            logger.warn("未找到与查询相关的文档");
+            return null;
+        }
+
+        String context = relevantDocs.stream()
+                    .filter(doc -> doc.getScore() > minScore)
+                .map(Document::getText)
+                .collect(Collectors.joining("\n\n"));
+        if (StringUtils.isBlank(context)) {
+            return null;
+        }
+
+        String prompt = String.format(
+                "基于以下知识库内容回答用户问题。" +
+                        "如果知识库内容可以回答问题，请基于上述知识库内容给出准确、有用的回答。\n\n" +
+                        "如果知识库内容无法回答问题，请使用原文“我不知道”回答，禁止添加其他任何文字。\n\n" +
+                        "知识库内容：\n%s\n\n" +
+                        "用户问题：%s\n\n",
+                context, query);
+
+        String answer = chatClient.prompt(prompt)
+                .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, conversationId))
+                .call().content();
+        logger.info("知识库对话完成，查询: '{}'", query);
+
+        if ("我不知道".equals(answer)) {
+            return null;
+        }
+        return answer;
     }
 }
