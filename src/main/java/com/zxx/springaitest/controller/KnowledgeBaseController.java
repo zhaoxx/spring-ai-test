@@ -39,7 +39,7 @@ public class KnowledgeBaseController {
     }
 
     @PostMapping("/upload-file")
-    public ResponseEntity<String> uploadFileByType(@RequestParam("file") MultipartFile file) {
+    public ResponseEntity<String> uploadFile(@RequestParam("file") MultipartFile file) {
         if (file.isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("文件为空");
         }
