@@ -40,7 +40,7 @@ public class MultiChatClientController {
                     if (StringUtils.isBlank(job.orderNo()) || StringUtils.isBlank(job.name())) {
                         sink.tryEmitNext("请输入姓名和订单号");
                     } else {
-                        sink.tryEmitNext("退票成功");
+                        sink.tryEmitNext("取消成功");
                     }
                 }
                 case QUERY -> {

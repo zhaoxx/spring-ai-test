@@ -7,6 +7,7 @@ import com.zxx.springaitest.tools.DynamicToolService;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.PromptChatMemoryAdvisor;
 import org.springframework.ai.chat.memory.ChatMemory;
+import org.springframework.ai.deepseek.DeepSeekChatModel;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
@@ -43,6 +44,7 @@ public class SmartCustomerServiceImpl implements SmartCustomerService {
                         您是电商平台的专属智能客服。请以友好、专业的语气回复。
                         在查询或取消订单前，必须先向用户确认订单号。
                         如果用户要求取消订单，请明确告知退款规则。
+                        只有待发货订单才允许取消，其他订单不允许取消。
                         请始终使用中文回复。
                         """)
                 // 2. 挂载多轮对话记忆（Memory）

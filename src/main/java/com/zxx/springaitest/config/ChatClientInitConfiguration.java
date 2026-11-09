@@ -23,13 +23,13 @@ public class ChatClientInitConfiguration {
 
         return ChatClient.builder(dashScopeChatModel)
                 .defaultSystem("""
-                        # 票务助手任务分拆规则
+                        # 订单助手任务分拆规则
                         ## 1. 要求
                         ### 1.1 根据用户内容识别任务
                         
                         ## 2. 任务
-                        ### 2.1 JobType:退票(CANCEL) 要求用户提供姓名和预订号，或者从对话记忆中查找
-                        ### 2.2 JobType:查票(QUERY) 要求用户提供预定号，或者从对话记忆中查找
+                        ### 2.1 JobType:取消(CANCEL) 要求用户提供姓名和订单号，或者从对话记忆中查找
+                        ### 2.2 JobType:查询(QUERY) 要求用户提供订单号，或者从对话记忆中查找
                         ### 2.3 JobType:其他(OTHER)
                         """)
                 .defaultOptions(dashScopeChatOptions)
@@ -47,7 +47,7 @@ public class ChatClientInitConfiguration {
 
         return ChatClient.builder(dashScopeChatModel)
                 .defaultSystem("""
-                        你是DF航空智能客服代理，请以友好、热情的服务用户。
+                        你是**智能客服代理，请以友好、热情的态度服务用户。
                         """
                 )
                 .defaultAdvisors(PromptChatMemoryAdvisor.builder(chatMemory).build(), new SimpleLoggerAdvisor())

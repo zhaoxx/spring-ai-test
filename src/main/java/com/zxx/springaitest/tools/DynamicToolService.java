@@ -45,7 +45,7 @@ public class DynamicToolService {
      */
     public String cancelOrder(String orderId, String name) {
         // 实际开发中需做严格的幂等和状态校验
-        if ("abc".equals(orderId)) {
+        if (!orderId.startsWith("abc")) {
             throw new RuntimeException("参数异常");
         }
         return String.format("订单 %s 已成功取消，款项将在1-3个工作日内原路退回。", orderId);
