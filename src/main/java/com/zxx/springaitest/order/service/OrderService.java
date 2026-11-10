@@ -1,5 +1,8 @@
-package com.zxx.springaitest.order;
+package com.zxx.springaitest.order.service;
 
+import com.zxx.springaitest.order.dao.OrderRepository;
+import com.zxx.springaitest.order.enums.OrderStatusEnum;
+import com.zxx.springaitest.order.model.Order;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 

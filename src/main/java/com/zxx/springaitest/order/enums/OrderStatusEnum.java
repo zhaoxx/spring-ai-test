@@ -1,4 +1,4 @@
-package com.zxx.springaitest.order;
+package com.zxx.springaitest.order.enums;
 
 public enum OrderStatusEnum {
 

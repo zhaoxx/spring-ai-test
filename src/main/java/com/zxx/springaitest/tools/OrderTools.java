@@ -1,8 +1,8 @@
 //package com.zxx.springaitest.tools;
 //
-//import com.zxx.springaitest.order.Order;
-//import com.zxx.springaitest.order.OrderService;
-//import com.zxx.springaitest.order.OrderStatusEnum;
+//import com.zxx.springaitest.order.model.Order;
+//import com.zxx.springaitest.order.service.OrderService;
+//import com.zxx.springaitest.order.enums.OrderStatusEnum;
 //import org.springframework.ai.tool.annotation.Tool;
 //import org.springframework.ai.tool.annotation.ToolParam;
 //import org.springframework.beans.factory.annotation.Autowired;

@@ -1,4 +1,6 @@
-package com.zxx.springaitest.order;
+package com.zxx.springaitest.order.model;
+
+import com.zxx.springaitest.order.enums.OrderStatusEnum;
 
 import java.time.LocalDateTime;
 

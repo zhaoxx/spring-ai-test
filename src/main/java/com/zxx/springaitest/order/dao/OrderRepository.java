@@ -1,5 +1,7 @@
-package com.zxx.springaitest.order;
+package com.zxx.springaitest.order.dao;
 
+import com.zxx.springaitest.order.enums.OrderStatusEnum;
+import com.zxx.springaitest.order.model.Order;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;

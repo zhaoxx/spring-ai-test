@@ -1,7 +1,7 @@
 package com.zxx.springaitest.tools;
 
-import com.zxx.springaitest.order.Order;
-import com.zxx.springaitest.order.OrderService;
+import com.zxx.springaitest.order.model.Order;
+import com.zxx.springaitest.order.service.OrderService;
 import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.tool.definition.ToolDefinition;
 import org.springframework.ai.tool.method.MethodToolCallback;
