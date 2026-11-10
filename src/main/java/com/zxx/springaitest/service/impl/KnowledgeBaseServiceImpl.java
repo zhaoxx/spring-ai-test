@@ -35,7 +35,7 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
     private static final Logger logger = LoggerFactory.getLogger(KnowledgeBaseServiceImpl.class);
 
     private final VectorStore vectorStore;
-    private final ChatClient chatClient;
+    private final ChatClient konwledgeClient;
 
     @Value("${similarity.search.min.score}")
     private Double minScore;
@@ -44,7 +44,7 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
     public KnowledgeBaseServiceImpl(VectorStore vectorStore,
                                     @Autowired DashScopeChatModel chatModel) {
         this.vectorStore = vectorStore;
-        this.chatClient = ChatClient.builder(chatModel)
+        this.konwledgeClient = ChatClient.builder(chatModel)
                 .defaultAdvisors(new SimpleLoggerAdvisor())
                 .defaultOptions(ChatOptions.builder().temperature(0.7).build())
                 .build();
@@ -132,7 +132,7 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
                         "请基于上述知识库内容给出准确、有用的回答：",
                 context, query);
 
-        String answer = chatClient.prompt(prompt).call().content();
+        String answer = konwledgeClient.prompt(prompt).call().content();
         logger.info("知识库对话完成，查询: '{}'", query);
         return answer;
     }
@@ -161,7 +161,7 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
                             "请基于上述知识库内容给出准确、有用的回答：",
                     context, query);
 
-            return chatClient.prompt(prompt).stream().content();
+            return konwledgeClient.prompt(prompt).stream().content();
 
         } catch (Exception e) {
             logger.error("流式知识库对话失败，查询: '{}'", query, e);
@@ -196,7 +196,7 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
                         "用户问题：%s\n\n",
                 context, query);
 
-        String answer = chatClient.prompt(prompt)
+        String answer = konwledgeClient.prompt(prompt)
                 .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, conversationId))
                 .call().content();
         logger.info("知识库对话完成，查询: '{}'", query);
