@@ -2,6 +2,7 @@ package com.zxx.springaitest.controller;
 
 import com.zxx.springaitest.model.CustomerOptions;
 import com.zxx.springaitest.service.SmartCustomerService;
+import org.apache.tika.utils.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -37,7 +38,7 @@ public class CustomerServiceController {
     @RequestMapping(value = "/chat")
     public String chat(CustomerOptions customerOptions) {
         String message = customerOptions.getMessage();
-        String sessionId = Objects.isNull(customerOptions.getSessionId()) ? UUID.randomUUID().toString() : customerOptions.getSessionId();
+        String sessionId = StringUtils.isBlank(customerOptions.getSessionId()) ? UUID.randomUUID().toString() : customerOptions.getSessionId();
         return smartCustomerService.chat(message, sessionId);
     }
 }
