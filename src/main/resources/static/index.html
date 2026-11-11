@@ -1,0 +1,1038 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#eef2f7">
+  <title>智能客服</title>
+  <style>
+    :root {
+      --bg: #eef2f7;
+      --panel: #ffffff;
+      --border: #e4e8ee;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --brand: #2563eb;
+      --bot-bubble: #f4f6fa;
+      --shadow: 0 24px 60px rgba(15, 23, 42, 0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      height: 100%;
+    }
+
+    body {
+      margin: 0;
+      padding: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background:
+        radial-gradient(1200px 600px at 10% -10%, #dbeafe 0%, transparent 60%),
+        radial-gradient(900px 500px at 110% 10%, #ede9fe 0%, transparent 55%),
+        var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif;
+    }
+
+    .chat-app {
+      width: min(880px, 100%);
+      height: calc(100vh - 48px);
+      height: min(860px, calc(100dvh - 48px));
+      display: flex;
+      flex-direction: column;
+      background: var(--panel);
+      border: 1px solid rgba(255, 255, 255, 0.8);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .chat-header {
+      flex: 0 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.92);
+    }
+
+    .chat-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .chat-title h1 {
+      margin: 0;
+      font-size: 17px;
+      font-weight: 650;
+      letter-spacing: 0.2px;
+    }
+
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin: 2px 0 0;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #22c55e;
+      box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.15);
+    }
+
+    .ghost-button {
+      flex: 0 0 auto;
+      padding: 8px 14px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: #fff;
+      color: var(--text);
+      font: inherit;
+      font-size: 13px;
+      cursor: pointer;
+      transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+    }
+
+    .ghost-button:hover {
+      border-color: var(--brand);
+      color: var(--brand);
+      background: #f5f8ff;
+    }
+
+    .messages {
+      flex: 1 1 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      min-height: 0;
+      padding: 22px 20px;
+      overflow-y: auto;
+      scroll-behavior: smooth;
+    }
+
+    .messages::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .messages::-webkit-scrollbar-thumb {
+      border-radius: 4px;
+      background: #d3dae3;
+    }
+
+    .message {
+      display: flex;
+      align-items: flex-end;
+      gap: 10px;
+      animation: rise 0.22s ease;
+    }
+
+    .message.user {
+      flex-direction: row-reverse;
+    }
+
+    @keyframes rise {
+      from {
+        opacity: 0;
+        transform: translateY(6px);
+      }
+      to {
+        opacity: 1;
+        transform: none;
+      }
+    }
+
+    .avatar {
+      flex: 0 0 auto;
+      width: 34px;
+      height: 34px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      user-select: none;
+    }
+
+    .avatar.bot {
+      background: linear-gradient(135deg, #6366f1, #2563eb);
+    }
+
+    .avatar.user {
+      background: linear-gradient(135deg, #0ea5e9, #06b6d4);
+    }
+
+    .bubble {
+      max-width: 72%;
+      padding: 11px 15px;
+      border-radius: 16px;
+      font-size: 14.5px;
+      line-height: 1.65;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .message.bot .bubble,
+    .message.error .bubble {
+      background: var(--bot-bubble);
+      border: 1px solid #e8edf3;
+      border-bottom-left-radius: 5px;
+    }
+
+    .message.user .bubble {
+      background: linear-gradient(135deg, var(--brand), #3b82f6);
+      border-bottom-right-radius: 5px;
+      box-shadow: 0 8px 18px rgba(37, 99, 235, 0.22);
+      color: #fff;
+    }
+
+    .message.error .bubble {
+      border-color: #fecaca;
+      background: #fef2f2;
+      color: #b91c1c;
+    }
+
+    .typing {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 15px 16px;
+    }
+
+    .typing span {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #94a3b8;
+      animation: blink 1.2s infinite ease-in-out;
+    }
+
+    .typing span:nth-child(2) {
+      animation-delay: 0.15s;
+    }
+
+    .typing span:nth-child(3) {
+      animation-delay: 0.3s;
+    }
+
+    @keyframes blink {
+      0%,
+      80%,
+      100% {
+        opacity: 0.25;
+        transform: translateY(0);
+      }
+      40% {
+        opacity: 1;
+        transform: translateY(-3px);
+      }
+    }
+
+    .composer {
+      flex: 0 0 auto;
+      padding: 14px 16px 10px;
+      border-top: 1px solid var(--border);
+      background: #fff;
+    }
+
+    .composer-row {
+      display: flex;
+      align-items: flex-end;
+      gap: 10px;
+    }
+
+    textarea {
+      flex: 1;
+      min-height: 44px;
+      max-height: 132px;
+      padding: 11px 14px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: #fbfcfe;
+      color: var(--text);
+      font: inherit;
+      font-size: 14.5px;
+      line-height: 1.5;
+      resize: none;
+      outline: none;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+    }
+
+    textarea:focus {
+      border-color: #93b4f8;
+      background: #fff;
+      box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+    }
+
+    .send-button {
+      flex: 0 0 auto;
+      height: 44px;
+      padding: 0 22px;
+      border: none;
+      border-radius: 14px;
+      background: linear-gradient(135deg, var(--brand), #3b82f6);
+      box-shadow: 0 8px 18px rgba(37, 99, 235, 0.25);
+      color: #fff;
+      font: inherit;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.12s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+    }
+
+    .send-button:hover:not(:disabled) {
+      transform: translateY(-1px);
+    }
+
+    .send-button:disabled {
+      opacity: 0.55;
+      box-shadow: none;
+      cursor: not-allowed;
+    }
+
+    .multi-turn {
+      flex: 0 0 auto;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      height: 44px;
+      padding: 0 2px;
+      color: var(--muted);
+      font-size: 13px;
+      white-space: nowrap;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .multi-turn input {
+      width: 16px;
+      height: 16px;
+      margin: 0;
+      accent-color: var(--brand);
+      cursor: pointer;
+    }
+
+    .hint {
+      margin: 8px 2px 0;
+      color: #9aa3af;
+      font-size: 11.5px;
+      text-align: center;
+    }
+
+    .tabs {
+      flex: 0 0 auto;
+      display: flex;
+      gap: 4px;
+      padding: 6px 16px 0;
+      border-bottom: 1px solid var(--border);
+      background: #fff;
+    }
+
+    .tab {
+      position: relative;
+      padding: 10px 14px 12px;
+      border: none;
+      border-radius: 10px 10px 0 0;
+      background: none;
+      color: var(--muted);
+      font: inherit;
+      font-size: 14px;
+      cursor: pointer;
+      transition: color 0.15s ease, background 0.15s ease;
+    }
+
+    .tab:hover {
+      background: #f6f8fb;
+      color: var(--text);
+    }
+
+    .tab.is-active {
+      color: var(--brand);
+      font-weight: 600;
+    }
+
+    .tab.is-active::after {
+      content: "";
+      position: absolute;
+      right: 12px;
+      bottom: -1px;
+      left: 12px;
+      height: 2px;
+      border-radius: 2px 2px 0 0;
+      background: var(--brand);
+    }
+
+    .is-hidden {
+      display: none !important;
+    }
+
+    .panel {
+      display: none;
+      min-height: 0;
+    }
+
+    .panel.is-active {
+      flex: 1 1 auto;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    .upload-panel {
+      flex: 1 1 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      width: 100%;
+      max-width: 720px;
+      min-height: 0;
+      margin: 0 auto;
+      padding: 24px 20px;
+      overflow-y: auto;
+    }
+
+    .upload-head h2 {
+      margin: 0 0 6px;
+      font-size: 16px;
+    }
+
+    .upload-head p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.65;
+    }
+
+    .dropzone {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 40px 20px;
+      border: 2px dashed #cfd8e3;
+      border-radius: 18px;
+      background: #fbfcfe;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
+    }
+
+    .dropzone:hover,
+    .dropzone:focus-visible {
+      border-color: #93b4f8;
+      background: #f5f9ff;
+      outline: none;
+    }
+
+    .dropzone.dragover {
+      border-color: var(--brand);
+      background: #eef4ff;
+      transform: scale(1.005);
+    }
+
+    .dropzone svg {
+      width: 40px;
+      height: 40px;
+      color: #93a4bb;
+    }
+
+    .dz-title {
+      margin: 0;
+      font-size: 14.5px;
+      font-weight: 600;
+    }
+
+    .dz-hint {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12.5px;
+    }
+
+    .file-info {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: #fff;
+    }
+
+    .file-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+    }
+
+    .file-name {
+      overflow: hidden;
+      font-size: 14px;
+      font-weight: 600;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .file-size {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .icon-button {
+      flex: 0 0 auto;
+      width: 30px;
+      height: 30px;
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      background: #fff;
+      color: var(--muted);
+      font-size: 18px;
+      line-height: 1;
+      cursor: pointer;
+    }
+
+    .icon-button:hover {
+      border-color: #fecaca;
+      background: #fef2f2;
+      color: #dc2626;
+    }
+
+    .upload-actions {
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .progress {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .progress-track {
+      flex: 1;
+      height: 8px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: #e8edf3;
+    }
+
+    .progress-bar {
+      width: 0;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, #3b82f6, #6366f1);
+      transition: width 0.2s ease;
+    }
+
+    .progress-text {
+      min-width: 38px;
+      color: var(--muted);
+      font-size: 12px;
+      text-align: right;
+    }
+
+    .result {
+      padding: 12px 14px;
+      border-radius: 12px;
+      font-size: 13.5px;
+      line-height: 1.6;
+      word-break: break-word;
+    }
+
+    .result.success {
+      border: 1px solid #bbf7d0;
+      background: #f0fdf4;
+      color: #15803d;
+    }
+
+    .result.error {
+      border: 1px solid #fecaca;
+      background: #fef2f2;
+      color: #b91c1c;
+    }
+
+    .upload-note {
+      margin: 0;
+      color: #9aa3af;
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    @media (max-width: 640px) {
+      body {
+        padding: 0;
+      }
+
+      .chat-app {
+        height: 100vh;
+        height: 100dvh;
+        border: none;
+        border-radius: 0;
+      }
+
+      .chat-header {
+        padding: 14px 16px;
+      }
+
+      .bubble {
+        max-width: 82%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="chat-app">
+    <header class="chat-header">
+      <div class="chat-title">
+        <div class="avatar bot">AI</div>
+        <div>
+          <h1>智能客服</h1>
+          <p class="status"><span class="status-dot"></span>在线</p>
+        </div>
+      </div>
+      <button id="new-chat" class="ghost-button" type="button">新对话</button>
+    </header>
+
+    <nav class="tabs" role="tablist" aria-label="功能切换">
+      <button id="tab-chat" class="tab is-active" type="button" role="tab"
+              aria-selected="true" aria-controls="panel-chat">智能对话</button>
+      <button id="tab-upload" class="tab" type="button" role="tab"
+              aria-selected="false" aria-controls="panel-upload">知识库上传</button>
+    </nav>
+
+    <section id="panel-chat" class="panel is-active" role="tabpanel" aria-labelledby="tab-chat">
+      <main id="messages" class="messages" role="log" aria-live="polite"></main>
+
+      <form id="chat-form" class="composer" autocomplete="off">
+        <div class="composer-row">
+          <textarea id="input" rows="1" maxlength="2000"
+                    placeholder="请输入您的问题，例如：取消订单 10001"
+                    aria-label="输入消息"></textarea>
+          <label class="multi-turn" title="勾选后使用固定会话 sessionId=zhaoxx">
+            <input id="multi-turn" type="checkbox" checked>
+            <span>多轮对话</span>
+          </label>
+          <button id="send" class="send-button" type="submit">发送</button>
+        </div>
+        <p class="hint">Enter 发送，Shift + Enter 换行</p>
+      </form>
+    </section>
+
+    <section id="panel-upload" class="panel" role="tabpanel" aria-labelledby="tab-upload">
+      <div class="upload-panel">
+        <div class="upload-head">
+          <h2>上传文档到知识库</h2>
+          <p>支持 PDF 及其他 Tika 可解析的文档（如 txt、md、docx、html）。上传后会写入向量库，供智能客服检索问答。</p>
+        </div>
+
+        <div id="dropzone" class="dropzone" role="button" tabindex="0" aria-label="选择或拖拽文件">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 16V4"></path>
+            <path d="m7 9 5-5 5 5"></path>
+            <path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"></path>
+          </svg>
+          <p class="dz-title">点击选择文件，或将文件拖拽到此处</p>
+          <p class="dz-hint">一次上传一个文件</p>
+        </div>
+        <input id="file-input" type="file" hidden>
+
+        <div id="file-info" class="file-info is-hidden">
+          <div class="file-meta">
+            <span id="file-name" class="file-name"></span>
+            <span id="file-size" class="file-size"></span>
+          </div>
+          <button id="clear-file" class="icon-button" type="button" aria-label="移除文件">×</button>
+        </div>
+
+        <div class="upload-actions">
+          <button id="upload-btn" class="send-button" type="button" disabled>开始上传</button>
+        </div>
+
+        <div id="upload-progress" class="progress is-hidden">
+          <div class="progress-track"><div id="progress-bar" class="progress-bar"></div></div>
+          <span id="progress-text" class="progress-text">0%</span>
+        </div>
+
+        <div id="upload-result" class="result is-hidden" role="status" aria-live="polite"></div>
+
+        <p class="upload-note">当前向量库为内存实现，服务重启后已上传内容会丢失，需要重新上传。</p>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    (function () {
+      var API_URL = '/api/customer/chat';
+      var MULTI_TURN_SESSION_ID = 'zhaoxx';
+
+      var messagesEl = document.getElementById('messages');
+      var form = document.getElementById('chat-form');
+      var input = document.getElementById('input');
+      var sendBtn = document.getElementById('send');
+      var newChatBtn = document.getElementById('new-chat');
+      var multiTurnInput = document.getElementById('multi-turn');
+
+      var sending = false;
+
+      function scrollToBottom() {
+        messagesEl.scrollTop = messagesEl.scrollHeight;
+      }
+
+      function addMessage(role, text) {
+        var row = document.createElement('div');
+        row.className = 'message ' + role;
+
+        var avatar = document.createElement('div');
+        avatar.className = 'avatar ' + (role === 'user' ? 'user' : 'bot');
+        avatar.textContent = role === 'user' ? '我' : 'AI';
+
+        var bubble = document.createElement('div');
+        bubble.className = 'bubble';
+        bubble.textContent = text;
+
+        row.appendChild(avatar);
+        row.appendChild(bubble);
+        messagesEl.appendChild(row);
+        scrollToBottom();
+      }
+
+      function addTyping() {
+        var row = document.createElement('div');
+        row.className = 'message bot';
+        row.setAttribute('data-typing', 'true');
+
+        var avatar = document.createElement('div');
+        avatar.className = 'avatar bot';
+        avatar.textContent = 'AI';
+
+        var bubble = document.createElement('div');
+        bubble.className = 'bubble typing';
+        for (var i = 0; i < 3; i++) {
+          bubble.appendChild(document.createElement('span'));
+        }
+
+        row.appendChild(avatar);
+        row.appendChild(bubble);
+        messagesEl.appendChild(row);
+        scrollToBottom();
+      }
+
+      function removeTyping() {
+        var typing = messagesEl.querySelector('[data-typing="true"]');
+        if (typing) {
+          typing.remove();
+        }
+      }
+
+      function setSending(value) {
+        sending = value;
+        sendBtn.disabled = value;
+        sendBtn.textContent = value ? '发送中' : '发送';
+      }
+
+      function autoResize() {
+        input.style.height = 'auto';
+        input.style.height = Math.min(input.scrollHeight, 132) + 'px';
+      }
+
+      function sendMessage(text) {
+        addMessage('user', text);
+        input.value = '';
+        autoResize();
+        setSending(true);
+        addTyping();
+
+        var params = new URLSearchParams({ message: text });
+        if (multiTurnInput.checked) {
+          params.append('sessionId', MULTI_TURN_SESSION_ID);
+        }
+
+        fetch(API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
+          body: params
+        })
+          .then(function (response) {
+            return response.text().then(function (body) {
+              return { ok: response.ok, status: response.status, body: body };
+            });
+          })
+          .then(function (result) {
+            removeTyping();
+            if (!result.ok) {
+              addMessage('error', '请求失败（HTTP ' + result.status + '）'
+                + (result.body ? '：' + result.body : ''));
+              return;
+            }
+            addMessage('bot', result.body && result.body.trim()
+              ? result.body
+              : '抱歉，我暂时没有获取到回复，请稍后再试。');
+          })
+          .catch(function (err) {
+            removeTyping();
+            addMessage('error', '网络异常，请确认后端服务已启动。'
+              + (err && err.message ? '（' + err.message + '）' : ''));
+          })
+          .finally(function () {
+            setSending(false);
+            input.focus();
+          });
+      }
+
+      form.addEventListener('submit', function (event) {
+        event.preventDefault();
+        if (sending) {
+          return;
+        }
+        var text = input.value.trim();
+        if (!text) {
+          return;
+        }
+        sendMessage(text);
+      });
+
+      input.addEventListener('keydown', function (event) {
+        if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) {
+          event.preventDefault();
+          form.requestSubmit();
+        }
+      });
+
+      input.addEventListener('input', autoResize);
+
+      newChatBtn.addEventListener('click', function () {
+        if (sending) {
+          return;
+        }
+        messagesEl.innerHTML = '';
+        addMessage('bot', '您好，我是电商平台智能客服。您可以咨询订单查询、订单取消或退款规则等问题。');
+        input.focus();
+      });
+
+      /* ---------- Tab 切换 ---------- */
+
+      var tabs = Array.prototype.slice.call(document.querySelectorAll('.tab'));
+
+      function activateTab(tab) {
+        tabs.forEach(function (item) {
+          var active = item === tab;
+          item.classList.toggle('is-active', active);
+          item.setAttribute('aria-selected', active ? 'true' : 'false');
+
+          var panel = document.getElementById(item.getAttribute('aria-controls'));
+          if (panel) {
+            panel.classList.toggle('is-active', active);
+          }
+        });
+
+        var isChat = tab.getAttribute('aria-controls') === 'panel-chat';
+        newChatBtn.classList.toggle('is-hidden', !isChat);
+        if (isChat) {
+          input.focus();
+        }
+      }
+
+      tabs.forEach(function (tab) {
+        tab.addEventListener('click', function () {
+          activateTab(tab);
+        });
+      });
+
+      /* ---------- 知识库上传 ---------- */
+
+      var dropzone = document.getElementById('dropzone');
+      var fileInput = document.getElementById('file-input');
+      var fileInfo = document.getElementById('file-info');
+      var fileNameEl = document.getElementById('file-name');
+      var fileSizeEl = document.getElementById('file-size');
+      var clearFileBtn = document.getElementById('clear-file');
+      var uploadBtn = document.getElementById('upload-btn');
+      var progressWrap = document.getElementById('upload-progress');
+      var progressBar = document.getElementById('progress-bar');
+      var progressText = document.getElementById('progress-text');
+      var resultEl = document.getElementById('upload-result');
+
+      var selectedFile = null;
+      var uploading = false;
+
+      function formatSize(bytes) {
+        if (bytes < 1024) {
+          return bytes + ' B';
+        }
+        if (bytes < 1024 * 1024) {
+          return (bytes / 1024).toFixed(1) + ' KB';
+        }
+        return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+      }
+
+      function setProgress(percent) {
+        progressBar.style.width = percent + '%';
+        progressText.textContent = percent + '%';
+      }
+
+      function hideProgress() {
+        progressWrap.classList.add('is-hidden');
+        setProgress(0);
+      }
+
+      function showResult(type, message) {
+        resultEl.className = 'result ' + type;
+        resultEl.textContent = message;
+      }
+
+      function hideResult() {
+        resultEl.className = 'result is-hidden';
+        resultEl.textContent = '';
+      }
+
+      function setSelectedFile(file) {
+        if (!file || uploading) {
+          return;
+        }
+        selectedFile = file;
+        fileNameEl.textContent = file.name;
+        fileSizeEl.textContent = formatSize(file.size);
+        fileInfo.classList.remove('is-hidden');
+        uploadBtn.disabled = false;
+        hideResult();
+        hideProgress();
+      }
+
+      function clearSelectedFile() {
+        selectedFile = null;
+        fileInput.value = '';
+        fileInfo.classList.add('is-hidden');
+        uploadBtn.disabled = true;
+      }
+
+      function finishUpload() {
+        uploading = false;
+        uploadBtn.textContent = '开始上传';
+        uploadBtn.disabled = selectedFile === null;
+      }
+
+      function startUpload() {
+        if (!selectedFile || uploading) {
+          return;
+        }
+
+        uploading = true;
+        uploadBtn.disabled = true;
+        uploadBtn.textContent = '上传中';
+        hideResult();
+        progressWrap.classList.remove('is-hidden');
+        setProgress(0);
+
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', '/api/v1/knowledge-base/upload-file');
+
+        xhr.upload.addEventListener('progress', function (event) {
+          if (event.lengthComputable && event.total > 0) {
+            setProgress(Math.min(100, Math.round((event.loaded / event.total) * 100)));
+          }
+        });
+
+        xhr.addEventListener('load', function () {
+          var body = xhr.responseText || '';
+          if (xhr.status >= 200 && xhr.status < 300) {
+            setProgress(100);
+            showResult('success', body || '上传成功');
+            clearSelectedFile();
+          } else {
+            hideProgress();
+            showResult('error', '上传失败（HTTP ' + xhr.status + '）' + (body ? '：' + body : ''));
+          }
+          finishUpload();
+        });
+
+        xhr.addEventListener('error', function () {
+          hideProgress();
+          showResult('error', '网络异常，请确认后端服务已启动。');
+          finishUpload();
+        });
+
+        var formData = new FormData();
+        formData.append('file', selectedFile);
+        xhr.send(formData);
+      }
+
+      dropzone.addEventListener('click', function () {
+        if (!uploading) {
+          fileInput.click();
+        }
+      });
+
+      dropzone.addEventListener('keydown', function (event) {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          if (!uploading) {
+            fileInput.click();
+          }
+        }
+      });
+
+      fileInput.addEventListener('change', function () {
+        if (fileInput.files && fileInput.files.length > 0) {
+          setSelectedFile(fileInput.files[0]);
+        }
+      });
+
+      dropzone.addEventListener('dragover', function (event) {
+        event.preventDefault();
+        if (!uploading) {
+          dropzone.classList.add('dragover');
+        }
+      });
+
+      dropzone.addEventListener('dragleave', function () {
+        dropzone.classList.remove('dragover');
+      });
+
+      dropzone.addEventListener('drop', function (event) {
+        event.preventDefault();
+        dropzone.classList.remove('dragover');
+        if (uploading) {
+          return;
+        }
+        var files = event.dataTransfer && event.dataTransfer.files;
+        if (files && files.length > 0) {
+          setSelectedFile(files[0]);
+        }
+      });
+
+      clearFileBtn.addEventListener('click', function () {
+        if (uploading) {
+          return;
+        }
+        clearSelectedFile();
+        hideResult();
+        hideProgress();
+      });
+
+      uploadBtn.addEventListener('click', startUpload);
+
+      addMessage('bot', '您好，我是电商平台智能客服。您可以咨询订单查询、订单取消或退款规则等问题。');
+      input.focus();
+    })();
+  </script>
+</body>
+</html>
